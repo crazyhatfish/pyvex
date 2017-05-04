@@ -25,6 +25,8 @@ def _find_c_lib():
 
     pyvex_path = pkg_resources.resource_filename(__name__, os.path.join('lib', library_file))
 
+    print "pyvex_path", pyvex_path
+
     ffi.cdef(_ffi_str)
     # RTLD_GLOBAL used for sim_unicorn.so
     lib = ffi.dlopen(pyvex_path)

@@ -6,7 +6,7 @@
 
 #include "logging.h"
 
-int log_level = 50;
+int log_level = 0;
 
 void pyvex_debug(const char *fmt, ...)
 {
@@ -18,7 +18,7 @@ void pyvex_debug(const char *fmt, ...)
 	vfprintf(stderr, fmt, args);
 	va_end(args);
 
-	fflush(stdout);
+	fflush(stderr);
 }
 
 void pyvex_info(const char *fmt, ...)
@@ -31,7 +31,7 @@ void pyvex_info(const char *fmt, ...)
 	vfprintf(stderr, fmt, args);
 	va_end(args);
 
-	fflush(stdout);
+	fflush(stderr);
 }
 
 void pyvex_error(const char *fmt, ...)

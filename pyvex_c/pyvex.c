@@ -119,6 +119,8 @@ void vex_init() {
 	LibVEX_default_VexArchInfo(&vai_host);
 	LibVEX_default_VexAbiInfo(&vbi);
 
+	pyvex_debug("Host arch hwcaps: %08x\n", vai_host.hwcaps);
+
 	vc.iropt_verbosity              = 0;
 	vc.iropt_level                  = 0;    // No optimization by default
 	//vc.iropt_precise_memory_exns    = False;
@@ -317,5 +319,34 @@ IRSB *vex_lift(
 		return LibVEX_Lift(&vta, &vtr, &pxControl);
 	} else {
 		return NULL;
+	}
+}
+
+void vex_drop(
+		VexArch host,
+		VexArchInfo archinfo,
+		IRSB *irsb,
+		unsigned char *bytes,
+		int bytes_size,
+		int *bytes_used) {
+	VexRegisterUpdates pxControl;
+
+	vex_prepare_vai(host, &archinfo);
+	vex_prepare_vbi(host, &vbi);
+
+	pyvex_debug("Host arch: %d\n", host);
+	pyvex_debug("Host arch hwcaps: %08x\n", archinfo.hwcaps);
+
+	vta.archinfo_host = archinfo;
+	vta.arch_host = host;
+	vta.abiinfo_both = vbi;
+	vta.traceflags = -1;
+
+	vta.host_bytes      = (UChar *)(bytes);
+	vta.host_bytes_size = (Int)(bytes_size);
+	vta.host_bytes_used = (Int *)(bytes_used);
+
+	if(setjmp(jumpout) == 0) {
+		LibVEX_Codegen(&vta, &vtr, irsb, pxControl);
 	}
 }

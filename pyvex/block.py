@@ -322,6 +322,17 @@ class IRSB(VEXObject):
         self.next = expr.IRExpr._from_c(c_irsb.next)
         self.jumpkind = ints_to_enums[c_irsb.jumpkind]
 
+    def _to_c(self):
+        c_irsb = pvc.emptyIRSB()
+        for statement in self.statements:
+            pvc.addStmtToIRSB(c_irsb, stmt.IRStmt._to_c(statement))
+        c_irsb.stmts_used = len(self.statements)
+        c_irsb.tyenv = IRTypeEnv._to_c(self.tyenv)
+        c_irsb.next = expr.IRExpr._to_c(self.next)
+        c_irsb.jumpkind = enums_to_ints[self.jumpkind]
+        c_irsb.offsIP = self.offsIP
+        return c_irsb
+
 class IRTypeEnv(VEXObject):
     """
     An IR type environment.

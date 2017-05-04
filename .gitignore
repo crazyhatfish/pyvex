@@ -16,3 +16,4 @@ libpyvex.so
 *.a
 pyvex/lib
 pyvex/include
+master.tar.gz

@@ -42,6 +42,10 @@ class IRStmt(VEXObject):
             raise PyVEXError('Unknown/unsupported IRStmtTag %s\n' % ints_to_enums[tag_int])
         return stmt_class._from_c(c_stmt)
 
+    @staticmethod
+    def _to_c(stmt):
+        return stmt.__class__._to_c(stmt)
+
     def typecheck(self, tyenv): # pylint: disable=unused-argument,no-self-use
         return True
 
@@ -65,6 +69,10 @@ class NoOp(IRStmt):
     @staticmethod
     def _from_c(c_stmt):
         return NoOp()
+
+    @staticmethod
+    def _to_c(stmt):
+        return pvc.IRStmt_NoOp()
 
 class IMark(IRStmt):
     """
@@ -92,6 +100,9 @@ class IMark(IRStmt):
                      c_stmt.Ist.IMark.len,
                      c_stmt.Ist.IMark.delta)
 
+    @staticmethod
+    def _to_c(stmt):
+        return pvc.IRStmt_IMark(stmt.addr, stmt.len, stmt.delta)
 
 class AbiHint(IRStmt):
     """
@@ -116,6 +127,12 @@ class AbiHint(IRStmt):
         return AbiHint(IRExpr._from_c(c_stmt.Ist.AbiHint.base),
                        c_stmt.Ist.AbiHint.len,
                        IRExpr._from_c(c_stmt.Ist.AbiHint.nia))
+
+    @staticmethod
+    def _to_c(stmt):
+        return pvc.IRStmt_AbiHint(IRExpr._to_c(stmt.base),
+                                  stmt.len,
+                                  IRExpr._to_c(stmt.nia))
 
 class Put(IRStmt):
     """
@@ -146,6 +163,11 @@ class Put(IRStmt):
         return Put(IRExpr._from_c(c_stmt.Ist.Put.data),
                    c_stmt.Ist.Put.offset)
 
+    @staticmethod
+    def _to_c(stmt):
+        return pvc.IRStmt_Put(stmt.offset,
+                              IRExpr._to_c(stmt.data))
+
     def typecheck(self, tyenv):
         return self.data.typecheck(tyenv)
 
@@ -174,6 +196,13 @@ class PutI(IRStmt):
                     IRExpr._from_c(c_stmt.Ist.PutI.details.ix),
                     IRExpr._from_c(c_stmt.Ist.PutI.details.data),
                     c_stmt.Ist.PutI.details.bias)
+
+    @staticmethod
+    def _to_c(stmt):
+        return pvc.IRStmt_PutI(IRRegArray._to_c(stmt.descr),
+                               IRExpr._to_c(stmt.ix),
+                               IRExpr._to_c(stmt.data),
+                               stmt.bias)
 
     def typecheck(self, tyenv):
         dataty = self.data.typecheck(tyenv)
@@ -216,6 +245,11 @@ class WrTmp(IRStmt):
         return WrTmp(c_stmt.Ist.WrTmp.tmp,
                      IRExpr._from_c(c_stmt.Ist.WrTmp.data))
 
+    @staticmethod
+    def _to_c(stmt):
+        return pvc.IRStmt_WrTmp(stmt.tmp,
+                                IRExpr._to_c(stmt.data))
+
     def typecheck(self, tyenv):
         dataty = self.data.typecheck(tyenv)
         if dataty is None:
@@ -253,6 +287,12 @@ class Store(IRStmt):
         return Store(IRExpr._from_c(c_stmt.Ist.Store.addr),
                      IRExpr._from_c(c_stmt.Ist.Store.data),
                      ints_to_enums[c_stmt.Ist.Store.end])
+
+    @staticmethod
+    def _to_c(stmt):
+        return pvc.IRStmt_Store(enums_to_ints[stmt.end],
+                                IRExpr._to_c(stmt.addr),
+                                IRExpr._to_c(stmt.data))
 
     def typecheck(self, tyenv):
         dataty = self.data.typecheck(tyenv)
@@ -308,6 +348,17 @@ class CAS(IRStmt):
                    c_stmt.Ist.CAS.details.oldLo,
                    c_stmt.Ist.CAS.details.oldHi,
                    ints_to_enums[c_stmt.Ist.CAS.details.end])
+
+    @staticmethod
+    def _to_c(stmt):
+        return pvc.IRStmt_CAS(pvc.mkIRCAS(IRExpr._to_c(stmt.addr),
+                                          IRExpr._to_c(stmt.dataLo),
+                                          IRExpr._to_c(stmt.dataHi),
+                                          IRExpr._to_c(stmt.expdLo),
+                                          IRExpr._to_c(stmt.expdHi),
+                                          stmt.oldLo,
+                                          stmt.oldHi,
+                                          enums_to_ints[stmt.end]))
 
     def typecheck(self, tyenv):
         addrty = self.addr.typecheck(tyenv)
@@ -383,6 +434,13 @@ class LLSC(IRStmt):
                     c_stmt.Ist.LLSC.result,
                     ints_to_enums[c_stmt.Ist.LLSC.end])
 
+    @staticmethod
+    def _to_c(stmt):
+        return pvc.IRStmt_LLSC(IRExpr._to_c(stmt.addr),
+                               IRExpr._to_c(stmt.storedata),
+                               stmt.result,
+                               enums_to_ints[stmt.end])
+
     def typecheck(self, tyenv):
         addrty = self.addr.typecheck(tyenv)
         if addrty is None:
@@ -424,6 +482,10 @@ class MBE(IRStmt):
     @staticmethod
     def _from_c(c_stmt):
         return MBE(ints_to_enums[c_stmt.Ist.MBE.event])
+
+    @staticmethod
+    def _to_c(stmt):
+        return pvc.IRStmt_MBE(enums_to_ints[stmt.event])
 
 class Dirty(IRStmt):
 
@@ -473,6 +535,10 @@ class Dirty(IRStmt):
                      c_stmt.Ist.Dirty.details.mSize,
                      c_stmt.Ist.Dirty.details.nFxState)
 
+    @staticmethod
+    def _to_c(stmt):
+        pass
+
 class Exit(IRStmt):
     """
     A conditional exit from the middle of an IRSB.
@@ -513,6 +579,14 @@ class Exit(IRStmt):
                     IRConst._from_c(c_stmt.Ist.Exit.dst),
                     ints_to_enums[c_stmt.Ist.Exit.jk],
                     c_stmt.Ist.Exit.offsIP)
+
+    @staticmethod
+    def _to_c(stmt):
+        #raise NotImplementedError()
+        return pvc.IRStmt_Exit(IRExpr._to_c(stmt.guard),
+                               enums_to_ints[stmt.jk],
+                               IRConst._to_c(stmt.dst),
+                               stmt.offsIP)
 
     def typecheck(self, tyenv):
         if not self.jk.startswith("Ijk_"):
@@ -673,4 +747,21 @@ _tag_to_class = {
     enums_to_ints['Ist_Dirty']: Dirty,
     enums_to_ints['Ist_MBE']: MBE,
     enums_to_ints['Ist_Exit']: Exit,
+}
+
+_class_to_tag = {
+    NoOp: enums_to_ints['Ist_NoOp'],
+    IMark: enums_to_ints['Ist_IMark'],
+    AbiHint: enums_to_ints['Ist_AbiHint'],
+    Put: enums_to_ints['Ist_Put'],
+    PutI: enums_to_ints['Ist_PutI'],
+    WrTmp: enums_to_ints['Ist_WrTmp'],
+    Store: enums_to_ints['Ist_Store'],
+    LoadG: enums_to_ints['Ist_LoadG'],
+    StoreG: enums_to_ints['Ist_StoreG'],
+    CAS: enums_to_ints['Ist_CAS'],
+    LLSC: enums_to_ints['Ist_LLSC'],
+    Dirty: enums_to_ints['Ist_Dirty'],
+    MBE: enums_to_ints['Ist_MBE'],
+    Exit: enums_to_ints['Ist_Exit'],
 }

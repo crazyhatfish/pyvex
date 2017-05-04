@@ -1,9 +1,10 @@
 import threading
 import logging
 l = logging.getLogger('pyvex.lift.libvex')
-l.setLevel(20) # Shut up
+#l.setLevel(20) # Shut up
+l.setLevel(0) # Speak up
 
-from . import Lifter, register
+from . import Lifter, Dropper, register
 from .. import pvc, ffi
 
 _libvex_lock = threading.Lock()
@@ -24,7 +25,8 @@ class LibVEXLifter(Lifter):
             _libvex_lock.acquire()
             self.irsb.arch.vex_archinfo['hwcache_info']['caches'] = ffi.NULL
 
-            pvc.log_level = l.getEffectiveLevel()
+            #pvc.log_level = l.getEffectiveLevel()
+            pvc.log_level = 0
             vex_arch = getattr(pvc, self.irsb.arch.vex_arch)
 
             if self.max_inst is None: self.max_inst = 99

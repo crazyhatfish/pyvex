@@ -29,4 +29,12 @@ IRSB *vex_lift(
 		int traceflags,
 		int allow_lookback);
 
+void vex_drop(
+		VexArch host,
+		VexArchInfo archinfo,
+		IRSB *irsb,
+		unsigned char *bytes,
+		int bytes_size,
+		int *bytes_used);
+
 #endif

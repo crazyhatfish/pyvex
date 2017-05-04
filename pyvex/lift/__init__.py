@@ -39,6 +39,59 @@ class Lifter(object):
         """
         return False
 
+    def drop(self):
+        return False
+
+    def error(self):
+        """
+        Return the error message from an unsuccessful lift. If the error is just "unsupported
+        architecture", just return None.
+        """
+        return self._error
+
+    def postprocess(self):
+        """
+        Postprocess the populated IRSB passed in.
+        """
+        pass
+
+class Dropper(object):
+    """
+    A lifter is a class of methods for processing a block.
+    """
+    REQUIRE_DATA_C = False
+    REQUIRE_DATA_PY = False
+
+    def __init__(self,
+            irsb,
+            data,
+            max_inst,
+            max_bytes,
+            bytes_offset,
+            opt_level,
+            traceflags,
+            allow_lookback):
+        self.irsb = irsb
+        self.data = data
+        self.max_inst = max_inst
+        self.max_bytes = max_bytes
+        self.bytes_offset = bytes_offset
+        self.opt_level = opt_level
+        self.traceflags = traceflags
+        self.allow_lookback = allow_lookback
+
+        self._error = None  # you might want to use this
+
+    # pylint: disable=no-self-use
+
+    def drop(self):
+        """
+        Populate the fields of the empty IRSB passed in. Return whether or not successful.
+
+        Only the first successful lifter will be used.
+        """
+        return False
+
     def error(self):
         """
         Return the error message from an unsuccessful lift. If the error is just "unsupported
